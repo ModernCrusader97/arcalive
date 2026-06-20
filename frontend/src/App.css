@@ -175,6 +175,73 @@ a:hover { text-decoration: underline; }
 .empty { text-align: center; padding: 40px; color: #aaa; font-size: 13px; }
 .loading { text-align: center; padding: 30px; color: #aaa; }
 
+/* ─── Mobile ─── */
+@media (max-width: 640px) {
+  body { font-size: 14px; }
+
+  /* Layout: stack vertically */
+  .layout { flex-direction: column; padding: 6px 0; gap: 0; }
+
+  /* Sidebar: horizontal scroll strip */
+  .sidebar { width: 100%; }
+  .sidebar-box { display: flex; flex-direction: row; overflow-x: auto; border-bottom: 1px solid #ddd; border-left: none; border-right: none; border-top: none; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .sidebar-box::-webkit-scrollbar { display: none; }
+  .sidebar-title { display: none; }
+  .sidebar-item { display: inline-block; padding: 8px 14px; white-space: nowrap; border-bottom: none; border-right: 1px solid #f0f0f0; flex-shrink: 0; font-size: 13px; }
+  .sidebar-item.active { border-bottom: 2px solid #e84393; }
+  .sidebar-box .btn { display: none; }
+
+  /* Board header */
+  .board-header { padding: 8px 12px; }
+  .board-title { font-size: 14px; }
+
+  /* Post table: hide 번호 and author columns */
+  .post-num, .post-author { display: none; }
+  .post-table th.post-date { width: 52px; }
+  .post-table td { padding: 9px 8px; font-size: 13px; }
+  .post-title-link { font-size: 13px; }
+
+  /* Post view */
+  .post-view-header { padding: 12px; }
+  .post-view-title { font-size: 15px; }
+  .post-view-body { padding: 12px; font-size: 14px; }
+  .post-vote { gap: 10px; padding: 12px; }
+  .vote-btn { flex: 1; justify-content: center; padding: 10px 8px; font-size: 13px; }
+
+  /* Comment */
+  .comment-item.reply { padding-left: 20px; }
+  .comment-form-row { flex-wrap: wrap; }
+  .comment-form input { width: 100%; flex: none; }
+  .comment-form-submit { width: 100%; margin-left: 0; padding: 8px; }
+
+  /* Write form */
+  .write-form { padding: 12px; border-left: none; border-right: none; }
+  .form-row input, .form-row textarea, .form-row select { font-size: 16px; } /* prevent iOS zoom */
+  .form-actions button { flex: 1; }
+
+  /* Block editor: bigger touch targets */
+  .be-controls button { padding: 5px 8px; font-size: 13px; }
+  .fmt-toolbar button, .color-btn { padding: 5px 10px; font-size: 13px; }
+  .be-text-ta, .be-quote-ta, .be-spoiler-ta { font-size: 16px; min-height: 100px; } /* prevent iOS zoom */
+  .be-image { flex-direction: column; }
+  .be-image-opts { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .be-youtube iframe { height: 56.25vw; max-height: 315px; } /* 16:9 */
+
+  /* Add bar */
+  .add-bar-menu { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
+  .add-bar-menu button, .add-bar-menu label { padding: 5px 10px; font-size: 12px; }
+
+  /* YouTube viewer: 16:9 */
+  .bv-youtube iframe { height: 56.25vw; max-height: 315px; }
+
+  /* Modal */
+  .modal { padding: 20px 16px; width: 95vw; }
+
+  /* Pagination */
+  .pagination { padding: 10px 6px; gap: 2px; flex-wrap: wrap; }
+  .page-btn { min-width: 36px; padding: 6px 8px; font-size: 13px; }
+}
+
 /* ─── Block Viewer ─── */
 .block-viewer { line-height: 1.75; font-size: 13px; }
 .bv-text { white-space: pre-wrap; margin: 4px 0; }
