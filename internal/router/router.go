@@ -3,6 +3,8 @@ package router
 import (
 	"database/sql"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"arcalive/internal/handler"
 	"arcalive/internal/middleware"
@@ -20,6 +22,22 @@ func New(db *sql.DB) *gin.Engine {
 		AllowCredentials: true,
 	}))
 	r.Static("/uploads", "./uploads")
+
+	// Serve built frontend
+	distDir := os.Getenv("STATIC_DIR")
+	if distDir == "" {
+		distDir = "dist"
+	}
+	if _, err := os.Stat(distDir); err == nil {
+		r.Static("/assets", filepath.Join(distDir, "assets"))
+		r.NoRoute(func(c *gin.Context) {
+			if len(c.Request.URL.Path) > 4 && c.Request.URL.Path[:4] == "/api" {
+				c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+				return
+			}
+			c.File(filepath.Join(distDir, "index.html"))
+		})
+	}
 
 	r.GET("/health", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"ok": true}) })
 

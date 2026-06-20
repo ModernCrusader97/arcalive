@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { auth, channels, posts, comments, Channel, Post, Comment, User } from './api'
+import { auth, channels, posts, comments, upload } from './api'
+import type { Channel, Post, Comment, User } from './api'
 import './App.css'
 
 function formatDate(s: string) {
@@ -75,7 +76,7 @@ function AuthModal({ onClose, onLogin }: { onClose: () => void; onLogin: (u: Use
 }
 
 // Post List Page
-function PostList({ channel, user, onPost }: { channel: Channel; user: User | null; onPost: (id: number) => void }) {
+function PostList({ channel, user: _user, onPost }: { channel: Channel; user: User | null; onPost: (id: number) => void }) {
   const [postList, setPostList] = useState<Post[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -197,7 +198,7 @@ function PostView({ postId, user, onBack }: { postId: number; user: User | null;
   if (!post) return <div className="empty">게시글을 찾을 수 없습니다</div>
 
   const allComments: Comment[] = []
-  const renderComments = (list: Comment[], isReply = false) => {
+  const renderComments = (list: Comment[], _isReply = false) => {
     list.forEach(c => {
       allComments.push(c)
       if (c.replies?.length) renderComments(c.replies, true)
@@ -281,12 +282,26 @@ function WritePost({ channel, user, onDone, onCancel }: {
   const [guestPw, setGuestPw] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [imageUrls, setImageUrls] = useState<string[]>([])
+  const [uploading, setUploading] = useState(false)
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const url = await upload.image(file)
+      setImageUrls(prev => [...prev, url])
+    } catch {
+      setError('이미지 업로드 실패')
+    } finally { setUploading(false) }
+  }
 
   const submit = async () => {
     if (!title.trim() || !content.trim()) { setError('제목과 내용을 입력해주세요'); return }
     setSubmitting(true); setError('')
     try {
-      const data: any = { title, content, image_urls: [] }
+      const data: any = { title, content, image_urls: imageUrls }
       if (!user) { data.guest_name = guestName || '익명'; data.guest_password = guestPw || '0000' }
       const res = await posts.create(channel.slug, data)
       onDone(res.data.id)
@@ -319,12 +334,71 @@ function WritePost({ channel, user, onDone, onCancel }: {
           <label>내용</label>
           <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="내용을 입력하세요" />
         </div>
+        <div className="form-row">
+          <label>이미지 첨부</label>
+          <input type="file" accept="image/*" onChange={handleImageChange} disabled={uploading} />
+          {uploading && <span style={{ fontSize: 12, color: '#888' }}>업로드 중...</span>}
+          {imageUrls.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+              {imageUrls.map((url, i) => (
+                <div key={i} style={{ position: 'relative' }}>
+                  <img src={url} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }} />
+                  <button onClick={() => setImageUrls(prev => prev.filter((_, j) => j !== i))}
+                    style={{ position: 'absolute', top: -6, right: -6, background: '#ff4d4f', color: '#fff', border: 'none', borderRadius: '50%', width: 18, height: 18, cursor: 'pointer', fontSize: 10 }}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         {error && <div className="error-msg">{error}</div>}
         <div className="form-actions">
           <button onClick={onCancel}>취소</button>
-          <button className="btn btn-pink" onClick={submit} disabled={submitting}>
+          <button className="btn btn-pink" onClick={submit} disabled={submitting || uploading}>
             {submitting ? '등록 중...' : '등록'}
           </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Create Channel Modal
+function CreateChannelModal({ onClose, onCreated }: { onClose: () => void; onCreated: (ch: Channel) => void }) {
+  const [name, setName] = useState('')
+  const [slug, setSlug] = useState('')
+  const [desc, setDesc] = useState('')
+  const [error, setError] = useState('')
+
+  const submit = async () => {
+    if (!name.trim() || !slug.trim()) { setError('이름과 슬러그를 입력해주세요'); return }
+    try {
+      const res = await channels.create({ name, slug: slug.toLowerCase().replace(/\s+/g, '-'), description: desc })
+      onCreated(res.data as Channel)
+    } catch (e: any) {
+      setError(e.response?.data?.error || '채널 생성 실패')
+    }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <h2>새 채널 만들기</h2>
+        <div className="form-row">
+          <label>채널 이름</label>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="예: 게임게시판" />
+        </div>
+        <div className="form-row">
+          <label>슬러그 (영문)</label>
+          <input value={slug} onChange={e => setSlug(e.target.value)} placeholder="예: game" />
+        </div>
+        <div className="form-row">
+          <label>설명</label>
+          <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="채널 설명 (선택)" />
+        </div>
+        {error && <div className="error-msg">{error}</div>}
+        <div className="modal-actions">
+          <button onClick={onClose}>취소</button>
+          <button className="btn btn-pink" onClick={submit}>생성</button>
         </div>
       </div>
     </div>
@@ -340,6 +414,7 @@ export default function App() {
   const [page, setPage] = useState<Page>({ view: 'list' })
   const [user, setUser] = useState<User | null>(null)
   const [showAuth, setShowAuth] = useState(false)
+  const [showCreateChannel, setShowCreateChannel] = useState(false)
 
   useEffect(() => {
     channels.list().then(res => {
@@ -385,6 +460,12 @@ export default function App() {
                 {ch.name}
               </span>
             ))}
+            {user && (
+              <button className="btn btn-sm" style={{ marginTop: 8, width: '100%' }}
+                onClick={() => setShowCreateChannel(true)}>
+                + 채널 만들기
+              </button>
+            )}
           </div>
         </aside>
 
@@ -406,7 +487,17 @@ export default function App() {
       {showAuth && (
         <AuthModal
           onClose={() => setShowAuth(false)}
-          onLogin={(u, t) => { setUser(u); setShowAuth(false) }}
+          onLogin={(u, _t) => { setUser(u); setShowAuth(false) }}
+        />
+      )}
+      {showCreateChannel && (
+        <CreateChannelModal
+          onClose={() => setShowCreateChannel(false)}
+          onCreated={ch => {
+            setChannelList(prev => [...prev, ch])
+            setActiveChannel(ch)
+            setShowCreateChannel(false)
+          }}
         />
       )}
     </div>

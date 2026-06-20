@@ -130,19 +130,23 @@ func (h *PostHandler) Vote(c *gin.Context) {
 	userID, loggedIn := c.Get("user_id")
 	ip := c.ClientIP()
 
-	var err error
+	var alreadyVoted int
 	if loggedIn {
-		_, err = h.db.Exec(
-			`INSERT OR IGNORE INTO post_votes (post_id, user_id, guest_ip, vote) VALUES (?,?,NULL,?)`,
-			postID, userID, req.Vote)
+		h.db.QueryRow(`SELECT COUNT(*) FROM post_votes WHERE post_id=? AND user_id=?`, postID, userID).Scan(&alreadyVoted)
+		if alreadyVoted == 0 {
+			if _, err := h.db.Exec(`INSERT INTO post_votes (post_id, user_id, guest_ip, vote) VALUES (?,?,NULL,?)`, postID, userID, req.Vote); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		}
 	} else {
-		_, err = h.db.Exec(
-			`INSERT OR IGNORE INTO post_votes (post_id, user_id, guest_ip, vote) VALUES (?,NULL,?,?)`,
-			postID, ip, req.Vote)
-	}
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		h.db.QueryRow(`SELECT COUNT(*) FROM post_votes WHERE post_id=? AND guest_ip=? AND user_id IS NULL`, postID, ip).Scan(&alreadyVoted)
+		if alreadyVoted == 0 {
+			if _, err := h.db.Exec(`INSERT INTO post_votes (post_id, user_id, guest_ip, vote) VALUES (?,NULL,?,?)`, postID, ip, req.Vote); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		}
 	}
 
 	h.db.Exec(`UPDATE posts SET likes=(SELECT COUNT(*) FROM post_votes WHERE post_id=? AND vote=1),
