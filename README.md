@@ -1,6 +1,6 @@
 # GallForum - 커뮤니티 게시판 플랫폼
 
-🌐 **Live Demo:** https://arcalive.lazzy.chat
+🌐 **Live Demo:** https://gallforum.lazzy.chat
 
 AI 코딩 툴(Claude Code)을 활용해 개발한 1인 풀스택 프로젝트입니다.
 
@@ -23,6 +23,7 @@ GallForum은 채널 기반 커뮤니티 게시판 플랫폼으로, 사용자가 
 | 게시글 | 채널별 게시글 작성 / 조회 / 투표(추천) |
 | 댓글 | 게시글 댓글 작성 및 조회 |
 | 이미지 업로드 | 게시글 이미지 첨부 |
+| 블록 에디터 | 텍스트, 이미지, 유튜브 임베드, 인용구, 스포일러 블록 지원 |
 
 ### 기술 스택
 - **Frontend:** React 19, TypeScript, Vite, React Router v7, Axios
