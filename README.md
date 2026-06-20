@@ -1,6 +1,6 @@
 # Arcalive - 커뮤니티 게시판 플랫폼
 
-🌐 **Live Demo:** https://arcalive.willdcard.com
+🌐 **Live Demo:** https://arcalive.lazzy.chat
 
 AI 코딩 툴(Claude Code)을 활용해 개발한 1인 풀스택 프로젝트입니다.
 
